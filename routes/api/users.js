@@ -207,15 +207,62 @@ router.get("/users/All",(req,res) => {
                 
                 user.followers.unshift({user:req.user.id});
                 // const followedUser = user._id;
-                user.save()
+                user.save().then(user => res.json(user))
                 User.findOne({ email: req.user.email })
                     .then(user => {
                         user.following.unshift({user:req.params.user_id});
-                        user.save().then(user => res.json(user))
+                        user.save()
                     })
                     .catch(err => res.status(404).json({alradyfollow:"you already followed the user"}))
             })
     })
+
+
+// route  post api/users/user/:user_id/unfollow-user
+// desc   post users route 
+// access private 
+
+//works perfectly
+
+
+    router.post("/user/:user_id/unfollow-user",  passport.authenticate("jwt", { session:false}), (req,res) =>{
+        User.findById(req.params.user_id)
+            .then(user => {
+                if(user.followers.filter(follower => 
+                    follower.user.toString() === req.user.id ).length === 0 ){
+                    return res.status(400).json({ unfollow : "you havent follow yet"})
+                }
+                 // unfollow the user
+                 const removeIndex = user.followers
+                 .map(item => item.user.toString())
+                 .indexOf(req.user.id);
+
+
+
+                 //splice of array
+                 user.followers.splice(removeIndex,1);
+                 //save
+                 user.save().then(user => res.json(user))
+                User.findOne({ email: req.user.email })
+                    .then(user => {
+    
+                        // unfollow the user
+                        const removeIndex = user.following
+                        .map(item => item.user.toString())
+                        .indexOf(req.params.user_id);
+
+
+    
+                        //splice of array
+                        user.following.splice(removeIndex,1);
+                        //save
+                        user.save().then(user => res.json(user))
+                    })
+                    .catch(err => res.status(404).json({usernotfound:"No user found"}))
+            })
+    });
+
+
 
 
     ///////////////////////////////////////////////saurabh code//////////////////////////////////////////////////

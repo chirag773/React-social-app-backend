@@ -56,6 +56,56 @@ router.get("/handle/:handle", (req,res) => {
 
 
 
+
+// route  get api/profile/All
+// desc   get all user profile 
+// access public
+
+router.get("/All",(req,res) => {
+    errors = {};
+    Profile.find()
+        .populate("user",["name","avatar","followers","following"])
+        .then(profiles => {
+            if(!profiles){
+                errors.noprofile = "There are no profiles";
+                return res.status(404).json(errors);
+            }
+            res.json(profiles);
+        })
+        .catch(err => res.status(404).json({profile:"There are no profiles"}));
+});
+
+
+router.get("/:handle/:id", (req,res) => {
+    errors = {};
+    Profile.findById( req.params.id )
+        .populate("user",["name","avatar","followers","following"])
+        .then(profile => {
+            if(!profile){
+                errors.noprofile = "There is no profile of this user";
+                return res.status(404).json(errors);
+            }
+            res.json(profile);
+        })
+        .catch(err => res.status(404).json({profile:"There is no profile for this user"}));
+});
+
+router.get("/:id", (req,res) => {
+    errors = {};
+    Profile.findById( req.params.id )
+        .populate("user",["name","avatar","followers","following"])
+        .then(profile => {
+            if(!profile){
+                errors.noprofile = "There is no profile of this user";
+                return res.status(404).json(errors);
+            }
+            res.json(profile);
+        })
+        .catch(err => res.status(404).json({profile:"There is no profile for this user"}));
+});
+
+
+
 // route  get api/profile/user/:user_id
 // desc   get user profile by Id
 // access public
@@ -75,24 +125,6 @@ router.get("/user/:user_id", (req,res) => {
         .catch(err => res.status(404).json({profile:"There is no profile for this user"}));
 });
 
-
-// route  get api/profile/All
-// desc   get all user profile 
-// access public
-
-router.get("/All",(req,res) => {
-    errors = {};
-    Profile.find()
-        .populate("user",["name","avatar","followers","following"])
-        .then(profiles => {
-            if(!profiles){
-                errors.noprofile = "There are no profiles";
-                return res.status(404).json(errors);
-            }
-            res.json(profiles);
-        })
-        .catch(err => res.status(404).json({profile:"There are no profiles"}));
-});
 
 
 
@@ -135,21 +167,19 @@ router.post("/", passport.authenticate("jwt", { session:false}), (req,res) => {
         .then(profile => {
             if (profile) {
                 //update
+               
                 Profile.findOneAndUpdate(
                     { user: req.user.id }, 
                     { $set: profileFields}, 
                     { new: true}
-                ).then((profile=>console.log(profile)))
+                ).then(profile => console.log(profile))
             } else {
                 //create
-
+                       
                 //check handel exist 
                 Profile.findOne({ handle:profileFields.handle})
                     .then(profile => {
-                        if(profile){
-                            errors.handle = "This handle already exist"
-                            res.status(400).json(errors);
-                        }
+                        
                         //save profile
                         new Profile(profileFields).save()
                             .then(profile => res.json(profile))
@@ -157,6 +187,24 @@ router.post("/", passport.authenticate("jwt", { session:false}), (req,res) => {
             }
         })
 });
+
+
+
+// router.put("/:id", passport.authenticate("jwt", { session:false}), function(req, res){
+//      const { errors, isValid } = validateProfileInput(req.body)
+//      if(!isValid){
+//         return res.status(400).json(errors)
+//     }
+//   Profile.findOne({ user: req.user.id } )
+//     .then(profile => {
+//         Profile.findOneAndUpdate(
+//                      { user: req.user.id }, 
+//                      { $set: profileFields}, 
+//                      { new: true}
+//                  ).then(profile => console.log(profile)
+//         )
+//     })
+// });
 
 
 // route  Post api/profile/experience     
